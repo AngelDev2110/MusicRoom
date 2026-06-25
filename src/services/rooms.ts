@@ -49,7 +49,6 @@ export const getMyMembership = async (roomId: string) => {
   return data;
 };
 
-// services/rooms.ts
 export const requestToJoin = async (roomId: string) => {
   const {
     data: { session },
@@ -63,6 +62,25 @@ export const requestToJoin = async (roomId: string) => {
     .select()
     .single();
 
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+export const approveMember = async (roomId: string, userId: string) => {
+  const { error } = await supabase
+    .from("room_members")
+    .update({ approved: true })
+    .eq("room_id", roomId)
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+};
+
+export const getPendingMembers = async (roomId: string) => {
+  const { data, error } = await supabase
+    .from("room_members")
+    .select("*")
+    .eq("room_id", roomId)
+    .eq("approved", false);
   if (error) throw new Error(error.message);
   return data;
 };
