@@ -48,3 +48,21 @@ export const getMyMembership = async (roomId: string) => {
 
   return data;
 };
+
+// services/rooms.ts
+export const requestToJoin = async (roomId: string) => {
+  const {
+    data: { session },
+  } = await getSession();
+  const userId = session?.user.id;
+  if (!userId) throw new Error("User is not authenticated");
+
+  const { data, error } = await supabase
+    .from("room_members")
+    .insert({ room_id: roomId, user_id: userId, approved: false })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+};
