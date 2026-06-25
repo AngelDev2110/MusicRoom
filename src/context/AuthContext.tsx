@@ -1,6 +1,7 @@
-import { useEffect, createContext, useState } from "react";
+import { useEffect, createContext, useState, useContext } from "react";
 import { supabase } from "../utils/supabase";
 import type { User } from "@supabase/supabase-js";
+import { getSession, signInAnonymously } from "@/services/auth";
 
 const AuthContext = createContext<{
   user: User | null;
@@ -11,20 +12,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  async function getSupabaseSession() {
-    return supabase.auth.getSession();
-  }
-
-  async function signInAnonymously() {
-    const { data } = await supabase.auth.signInAnonymously();
+  async function _signInAnonymously() {
+    const { data } = await signInAnonymously();
     return data?.user || null;
   }
 
   useEffect(() => {
-    getSupabaseSession().then(({ data: { session } }) => {
+    getSession().then(({ data: { session } }) => {
       if (session) setUser(session.user);
       else
-        signInAnonymously().then((user) => {
+        _signInAnonymously().then((user) => {
           setUser(user);
         });
       setLoading(false);
@@ -45,3 +42,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
+export const useAuth = () => useContext(AuthContext);
