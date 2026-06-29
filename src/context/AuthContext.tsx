@@ -18,14 +18,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    getSession().then(({ data: { session } }) => {
-      if (session) setUser(session.user);
-      else
-        _signInAnonymously().then((user) => {
-          setUser(user);
-        });
+    let cancelled = false;
+
+    async function init() {
+      const {
+        data: { session },
+      } = await getSession();
+
+      if (cancelled) return;
+
+      if (session) {
+        setUser(session.user);
+      } else {
+        const user = await _signInAnonymously();
+        if (cancelled) return;
+        setUser(user);
+      }
+
       setLoading(false);
-    });
+    }
+
+    init();
 
     const {
       data: { subscription },
@@ -33,7 +46,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user || null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
